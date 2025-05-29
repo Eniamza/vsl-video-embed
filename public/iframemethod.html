@@ -41,24 +41,6 @@
             height: 100%;
         }
 
-        /* Progress Bar */
-        .progress-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background-color: rgba(255, 255, 255, 0.3);
-            z-index: 10;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background-color: #ff0000;
-            width: 0%;
-            transition: width 0.1s linear;
-        }
-
         /* Sound Prompt */
         .sound-prompt {
             position: absolute;
@@ -140,8 +122,8 @@
         /* Animations */
         @keyframes fadeInOut {
             0% { opacity: 0; }
-            20% { opacity: 1; }
-            80% { opacity: 1; }
+            25% { opacity: 1; }
+            75% { opacity: 1; }
             100% { opacity: 0; }
         }
 
@@ -163,11 +145,6 @@
 <body>
     <div class="video-container" id="videoContainer">
         <div id="player"></div>
-        
-        <!-- Progress Bar -->
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
         
         <!-- Sound Prompts -->
         <div class="sound-prompt top" id="soundPromptTop">
@@ -205,18 +182,16 @@
         var player;
         var videoContainer = document.getElementById('videoContainer');
         var pauseOverlay = document.getElementById('pauseOverlay');
-        var progressFill = document.getElementById('progressFill');
         var soundPromptTop = document.getElementById('soundPromptTop');
         var soundPromptBottom = document.getElementById('soundPromptBottom');
         var isFirstPlay = true;
-        var progressInterval;
         var hasUnmuted = false;
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 height: '360',
                 width: '640',
-                videoId: 'Fp1QmKIFaCU',
+                videoId: 'K8YrX15e31s',
                 playerVars: {
                     'autoplay': 1,
                     'controls': 0,
@@ -240,12 +215,9 @@
             event.target.mute();
             event.target.playVideo();
             
-            // Show sound prompts with continuous animation
-            soundPromptTop.style.animation = 'fadeInOut 4s ease-in-out infinite';
-            soundPromptBottom.style.animation = 'fadeInOut 4s ease-in-out infinite';
-            
-            // Start progress tracking
-            startProgressTracking();
+            // Show sound prompts with faster animation
+            soundPromptTop.style.animation = 'fadeInOut 2s ease-in-out infinite';
+            soundPromptBottom.style.animation = 'fadeInOut 2s ease-in-out infinite';
         }
 
         function onPlayerStateChange(event) {
@@ -257,11 +229,8 @@
                 setTimeout(() => {
                     pauseOverlay.style.display = 'none';
                 }, 150);
-                
-                startProgressTracking();
             } else if (event.data == YT.PlayerState.PAUSED) {
                 pauseOverlay.style.display = 'flex';
-                clearInterval(progressInterval);
                 
                 // Remove YouTube's pause overlay immediately
                 removeYouTubePauseOverlay();
