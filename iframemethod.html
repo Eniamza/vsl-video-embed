@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom YouTube Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .video-container {
+            position: relative;
+            width: 90vw;
+            max-width: 800px;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        #player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.3);
+            z-index: 10;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #ff0000;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* Sound Prompt */
+        .sound-prompt {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            pointer-events: none;
+            animation: fadeInOut 4s ease-in-out infinite;
+            z-index: 20;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .sound-prompt.top {
+            top: 20px;
+        }
+
+        .sound-prompt.bottom {
+            bottom: 20px;
+        }
+
+        .sound-icon {
+            width: 24px;
+            height: 24px;
+            fill: white;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+        }
+
+        /* Pause Overlay */
+        .pause-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 15;
+            background-image: url('https://static.vecteezy.com/system/resources/previews/007/756/466/non_2x/sale-banner-buy-now-discount-big-sale-final-sale-and-best-price-for-website-banner-advertisements-blog-stickers-illustration-free-vector.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .play-icon-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .play-icon {
+            width: 80px;
+            height: 80px;
+            fill: white;
+            animation: grow 2s ease-in-out infinite;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+        }
+
+        .resume-text {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            animation: grow 2s ease-in-out infinite;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Animations */
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            25% { opacity: 1; }
+            75% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes grow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Hide YouTube branding */
+        .video-container iframe {
+            pointer-events: none;
+        }
+
+        .video-container.interactive iframe {
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container" id="videoContainer">
+        <div id="player"></div>
+        
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- Sound Prompts -->
+        <div class="sound-prompt top" id="soundPromptTop">
+            <svg class="sound-icon" viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+            <span>Tap for Sound</span>
+        </div>
+        
+        <div class="sound-prompt bottom" id="soundPromptBottom">
+            <svg class="sound-icon" viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+            <span>Tap for Sound</span>
+        </div>
+        
+        <!-- Pause Overlay -->
+        <div class="pause-overlay" id="pauseOverlay">
+            <div class="play-icon-container">
+                <svg class="play-icon" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                <div class="resume-text">Tap to Resume</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // YouTube IFrame API
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        var player;
+        var videoContainer = document.getElementById('videoContainer');
+        var pauseOverlay = document.getElementById('pauseOverlay');
+        var progressFill = document.getElementById('progressFill');
+        var soundPromptTop = document.getElementById('soundPromptTop');
+        var soundPromptBottom = document.getElementById('soundPromptBottom');
+        var isFirstPlay = true;
+        var progressInterval;
+        var hasUnmuted = false;
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '360',
+                width: '640',
+                videoId: 'Fp1QmKIFaCU',
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'fs': 0,
+                    'iv_load_policy': 3,
+                    'modestbranding': 1,
+                    'playsinline': 1,
+                    'enablejsapi': 1,
+                    'origin': window.location.origin,
+                    'mute': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            event.target.mute();
+            event.target.playVideo();
+            
+            // Show sound prompts with faster animation
+            soundPromptTop.style.animation = 'fadeInOut 2s ease-in-out infinite';
+            soundPromptBottom.style.animation = 'fadeInOut 2s ease-in-out infinite';
+            
+            // Start progress tracking
+            startProgressTracking();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                // Immediately remove YouTube overlays before showing video
+                removeYouTubePauseOverlay();
+                
+                // Add a small delay before hiding our overlay to ensure YouTube overlays are gone
+                setTimeout(() => {
+                    pauseOverlay.style.display = 'none';
+                }, 150);
+                
+                startProgressTracking();
+            } else if (event.data == YT.PlayerState.PAUSED) {
+                pauseOverlay.style.display = 'flex';
+                clearInterval(progressInterval);
+                
+                // Remove YouTube's pause overlay immediately
+                removeYouTubePauseOverlay();
+            }
+        }
+
+        function removeYouTubePauseOverlay() {
+            // Try multiple methods to remove YouTube's pause overlay
+            try {
+                // Method 1: Direct query selector (using the selector you mentioned)
+                var pauseOverlayYT = document.querySelector("#movie_player > div.ytp-pause-overlay-container > div");
+                if (pauseOverlayYT) {
+                    pauseOverlayYT.remove();
+                }
+                
+                // Method 2: Find by class name
+                var overlays = document.querySelectorAll('.ytp-pause-overlay');
+                overlays.forEach(overlay => overlay.remove());
+                
+                // Method 3: Find elements with tabindex -1
+                var tabIndexElements = document.querySelectorAll('[tabindex="-1"]');
+                tabIndexElements.forEach(element => {
+                    if (element.className && element.className.includes('ytp-pause-overlay')) {
+                        element.remove();
+                    }
+                });
+                
+                // Method 4: Remove all YouTube suggestion elements
+                var suggestionSelectors = [
+                    '.ytp-pause-overlay-container',
+                    '.ytp-suggestions',
+                    '.ytp-endscreen-element',
+                    '.ytp-ce-element',
+                    '.ytp-scroll-min',
+                    '.ytp-more-videos-view'
+                ];
+                
+                suggestionSelectors.forEach(selector => {
+                    var elements = document.querySelectorAll(selector);
+                    elements.forEach(el => el.remove());
+                });
+            } catch (e) {
+                console.log('Could not remove YouTube pause overlay:', e);
+            }
+        }
+
+        function startProgressTracking() {
+            clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                if (player && player.getCurrentTime && player.getDuration) {
+                    var currentTime = player.getCurrentTime();
+                    var duration = player.getDuration();
+                    var progress = (currentTime / duration) * 100;
+                    progressFill.style.width = progress + '%';
+                }
+            }, 100);
+        }
+
+        // Click handler for the video container
+        videoContainer.addEventListener('click', function(e) {
+            // Don't trigger if clicking on the iframe directly
+            if (e.target.tagName === 'IFRAME') return;
+            
+            if (player) {
+                var state = player.getPlayerState();
+                
+                // Handle "Tap for Sound" - restart video from beginning with sound
+                if (!hasUnmuted && player.isMuted()) {
+                    player.unMute();
+                    hasUnmuted = true;
+                    isFirstPlay = false;
+                    // Hide sound prompts
+                    soundPromptTop.style.display = 'none';
+                    soundPromptBottom.style.display = 'none';
+                    
+                    // Restart video from beginning
+                    player.seekTo(0);
+                    player.playVideo();
+                    return; // Don't continue to pause/play logic
+                }
+                
+                // Normal pause/play behavior (only after sound has been enabled)
+                if (hasUnmuted) {
+                    if (state === YT.PlayerState.PLAYING) {
+                        player.pauseVideo();
+                    } else if (state === YT.PlayerState.PAUSED) {
+                        player.playVideo();
+                    } else if (state === YT.PlayerState.CUED) {
+                        player.playVideo();
+                    }
+                }
+            }
+        });
+
+        // Prevent default YouTube click behavior
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#player')) {
+                e.preventDefault();
+                e.stopPropagation();
+                videoContainer.click();
+            }
+        }, true);
+
+        // Continuously remove YouTube overlays more aggressively
+        setInterval(removeYouTubePauseOverlay, 100);
+    </script>
+</body>
+</html>
