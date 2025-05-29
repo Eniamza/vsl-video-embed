@@ -52,12 +52,9 @@ app.get('/stream', async (req, res) => {
 
 // 3) Fallback: serve index.html on any other route (optional SPA support)
 // 3) Fallback: serve index.html on any other route
-app.get('*', (req, res) => {
-  if (req.url.includes('https://')) {
-    return res.status(400).send('Invalid URL format');
-  }
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+ app.get('/*', (req, res) => {
+     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+   });
 
 // 4) Start listening on all interfaces
 app.listen(PORT, '0.0.0.0', () => {
