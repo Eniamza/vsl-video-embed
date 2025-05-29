@@ -6,7 +6,7 @@ const ytdl    = require('@distube/ytdl-core');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS for all origins (so the HTML can be hosted anywhere)
+// Enable CORS for all origins
 app.use(cors());
 
 app.get('/stream', async (req, res) => {

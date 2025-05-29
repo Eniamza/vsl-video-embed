@@ -2,208 +2,252 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Embedded Video</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Embed Video with Preload Thumbnail</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background:#000;
+      display:flex; align-items:center; justify-content:center;
+      height:100vh; overflow:hidden;
+    }
     .video-container {
-      position: relative;
-      width: 90vw;
-      max-width: 800px;
-      aspect-ratio: 16/9;
-      background: #000;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      position:relative;
+      width:90vw; max-width:800px;
+      aspect-ratio:16/9;
+      background:#000;
+      border-radius:8px;
+      overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,0.5);
     }
+
+    /* 1) Thumbnail cover: underneath everything */
+    .thumbnail-cover {
+      position:absolute; top:0; left:0;
+      width:100%; height:100%;
+      background:#000;
+      display:flex; align-items:center; justify-content:center;
+      z-index:10; /* lower than the overlay */
+      pointer-events:none;
+    }
+    .thumbnail-cover img {
+      width:100%; height:100%; object-fit:cover;
+    }
+
+    /* 2) The video element */
     video {
-      width: 100%;
-      height: 100%;
-      display: block;
+      width:100%; height:100%; display:block;
     }
-    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+    /* hide native loading spinner */
+    video::-webkit-media-controls-loading-indicator { display:none!important; }
+
+    /* 3) Tap-for-sound overlay: above thumbnail */
+    @keyframes fadeInOut { 0%,100%{opacity:0}50%{opacity:1} }
+    .overlay {
+      position:absolute; top:0; left:0;
+      width:100%; height:100%;
+      pointer-events:none;
+      z-index:20;
+    }
     .tap-for-sound {
-      position: absolute;
-      color: white;
-      font-size: 24px;
-      font-weight: bold;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-      pointer-events: none;
-      opacity: 0;
-      animation: fadeInOut 2s infinite;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+      position:absolute;
+      color:#fff; font-size:24px; font-weight:bold;
+      text-shadow:2px 2px 4px rgba(0,0,0,0.8);
+      opacity:0; animation:fadeInOut 2s infinite;
+      display:flex; align-items:center; gap:10px;
     }
-    .tap-for-sound.top { top: 20%; left: 50%; transform: translateX(-50%); }
-    .tap-for-sound.bottom { bottom: 20%; left: 50%; transform: translateX(-50%); }
+    .tap-for-sound.top {
+      top:20%; left:50%; transform:translateX(-50%);
+    }
+    .tap-for-sound.bottom {
+      bottom:20%; left:50%; transform:translateX(-50%);
+    }
     .sound-icon {
-      width: 32px;
-      height: 32px;
-      fill: white;
-      filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.8));
-      flex-shrink: 0;
+      width:32px; height:32px;
+      fill:#fff;
+      filter:drop-shadow(2px 2px 4px rgba(0,0,0,0.8));
     }
-    @keyframes fadeInOut { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
+
+    /* 4) Click-catcher: above tap-for-sound */
     .click-overlay {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: 12;
-      cursor: pointer;
-      background: transparent;
+      position:absolute; top:0; left:0;
+      width:100%; height:100%;
+      z-index:30; cursor:pointer;
+      background:transparent;
     }
+
+    /* 5) Custom pause overlay: above everything */
     .pause-overlay {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 15;
-      cursor: pointer;
+      position:absolute; top:0; left:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.7);
+      display:none;
+      flex-direction:column;
+      justify-content:center; align-items:center;
+      z-index:40; cursor:pointer;
     }
     .play-icon {
-      width: 80px;
-      height: 80px;
-      border: 5px solid white;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 20px;
-      animation: growPulse 2s infinite;
+      width:80px; height:80px;
+      border:5px solid #fff; border-radius:50%;
+      display:flex; justify-content:center; align-items:center;
+      margin-bottom:20px;
+      animation:growPulse 2s infinite;
     }
     .play-icon::before {
-      content: '';
-      width: 0; height: 0;
-      border-left: 25px solid white;
-      border-top: 15px solid transparent;
-      border-bottom: 15px solid transparent;
-      margin-left: 5px;
+      content:''; width:0; height:0;
+      border-left:25px solid #fff;
+      border-top:15px solid transparent;
+      border-bottom:15px solid transparent;
+      margin-left:5px;
     }
     .resume-text {
-      color: white;
-      font-size: 22px;
-      font-weight: bold;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-      animation: growPulse 2s infinite;
+      color:#fff; font-size:22px; font-weight:bold;
+      text-shadow:2px 2px 4px rgba(0,0,0,0.8);
+      animation:growPulse 2s infinite;
     }
-    @keyframes growPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    @keyframes growPulse {
+      0%,100%{transform:scale(1)}50%{transform:scale(1.1)}
+    }
+
+    /* 6) Progress bar: top of all */
     .progress-bar {
-      position: absolute;
-      bottom: 0; left: 0;
-      height: 4px;
-      background: #ff4444;
-      width: 0%;
-      z-index: 20;
-      transition: width 0.1s ease;
+      position:absolute; bottom:0; left:0;
+      height:4px; background:#ff4444;
+      width:0%; transition:width 0.1s ease;
+      z-index:50;
     }
   </style>
 </head>
 <body>
   <div class="video-container" id="videoContainer">
-    <video id="myVideo" playsinline preload="metadata" muted
-      src="http://localhost:3000/stream?url=https://www.youtube.com/watch?v=10jiRJCXO0w">
+    <!-- 1) Thumbnail cover -->
+    <div class="thumbnail-cover" id="thumbCover">
+      <img src="https://img.youtube.com/vi/VtwgpSEPLbY/sddefault.jpg"
+           alt="Video thumbnail">
+    </div>
+
+    <!-- 2) HTML5 video -->
+    <video
+      id="myVideo"
+      playsinline
+      preload="auto"
+      muted
+      src="http://localhost:3000/stream?url=https://www.youtube.com/watch?v=VtwgpSEPLbY">
     </video>
 
+    <!-- 3) Tap-for-sound prompts -->
     <div class="overlay">
       <div class="tap-for-sound top" id="tapSoundTop">
         <svg class="sound-icon" viewBox="0 0 24 24">
-          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3
+                   c0-1.77-1.02-3.29-2.5-4.03v8.05
+                   c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23
+                   v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85
+                   -5 6.71v2.06c4.01-.91 7-4.49 7-8.77
+                   s-2.99-7.86-7-8.77z"/>
         </svg>
         Tap for Sound
       </div>
       <div class="tap-for-sound bottom" id="tapSoundBottom">
         <svg class="sound-icon" viewBox="0 0 24 24">
-          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3
+                   c0-1.77-1.02-3.29-2.5-4.03v8.05
+                   c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23
+                   v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85
+                   -5 6.71v2.06c4.01-.91 7-4.49 7-8.77
+                   s-2.99-7.86-7-8.77z"/>
         </svg>
         Tap for Sound
       </div>
     </div>
+
+    <!-- 4) Click-catcher -->
     <div class="click-overlay" id="clickOverlay"></div>
+
+    <!-- 5) Pause overlay -->
     <div class="pause-overlay" id="pauseOverlay">
       <div class="play-icon"></div>
       <div class="resume-text">Tap to Resume</div>
     </div>
+
+    <!-- 6) Progress bar -->
     <div class="progress-bar" id="progressBar"></div>
   </div>
 
   <script>
-    const video = document.getElementById('myVideo');
-    const tapTop = document.getElementById('tapSoundTop');
-    const tapBottom = document.getElementById('tapSoundBottom');
+    const video        = document.getElementById('myVideo');
+    const thumbCover   = document.getElementById('thumbCover');
+    const tapTop       = document.getElementById('tapSoundTop');
+    const tapBottom    = document.getElementById('tapSoundBottom');
     const clickOverlay = document.getElementById('clickOverlay');
     const pauseOverlay = document.getElementById('pauseOverlay');
-    const progressBar = document.getElementById('progressBar');
-    const container = document.getElementById('videoContainer');
+    const progressBar  = document.getElementById('progressBar');
+    let progressInt, firstPlay = true;
 
-    let progressInterval;
-
-    function showTapForSound() {
-      tapTop.style.display = 'flex';
-      tapBottom.style.display = 'flex';
-    }
-    function hideTapForSound() {
-      tapTop.style.display = 'none';
-      tapBottom.style.display = 'none';
-    }
-    function showPauseOverlay() {
-      pauseOverlay.style.display = 'flex';
-    }
-    function hidePauseOverlay() {
-      pauseOverlay.style.display = 'none';
-    }
+    // Show/hide helpers
+    const showThumbnail = () => thumbCover.style.display = 'flex';
+    const hideThumbnail = () => thumbCover.style.display = 'none';
+    const showTap       = () => { tapTop.style.display = 'flex'; tapBottom.style.display = 'flex'; };
+    const hideTap       = () => { tapTop.style.display = 'none'; tapBottom.style.display = 'none'; };
+    const showPause     = () => pauseOverlay.style.display = 'flex';
+    const hidePause     = () => pauseOverlay.style.display = 'none';
+    const startProgress = () => { progressInt = setInterval(updateProgress, 250); };
+    const stopProgress  = () => clearInterval(progressInt);
     function updateProgress() {
-      const pct = (video.currentTime / video.duration) * 100;
-      progressBar.style.width = pct + '%';
-    }
-    function startTracking() {
-      progressInterval = setInterval(updateProgress, 100);
-    }
-    function stopTracking() {
-      clearInterval(progressInterval);
+      if (!isNaN(video.duration) && video.duration > 0) {
+        progressBar.style.width = (video.currentTime / video.duration * 100) + '%';
+      }
     }
 
+    // 1) On load: show thumbnail, buffer, then autoplay muted
+    window.addEventListener('load', () => {
+      showThumbnail();
+      video.load();
+      video.addEventListener('canplaythrough', () => {
+        hideThumbnail();
+        video.play();
+        showTap();
+        startProgress();
+      }, { once: true });
+    });
+
+    // 2) Click handler: unmute / resume / pause
     clickOverlay.addEventListener('click', () => {
       if (video.muted) {
+        // first tap: unmute from beginning
+        if (firstPlay) video.currentTime = 0;
         video.muted = false;
-        hideTapForSound();
-        startTracking();
-      } else if (video.paused) {
+        hideTap();
+        if (firstPlay) {
+          video.play();
+          firstPlay = false;
+        }
+      }
+      else if (video.paused) {
+        // resume from currentTime
         video.play();
-        hidePauseOverlay();
-        stopTracking();
-        startTracking();
-      } else {
+        hidePause();
+        startProgress();
+      }
+      else {
+        // pause
         video.pause();
-        showPauseOverlay();
-        stopTracking();
+        showPause();
+        stopProgress();
       }
     });
 
+    // 3) On ended: show pause overlay (no rewind)
+    video.addEventListener('ended', () => {
+      stopProgress();
+      showPause();
+    });
+
+    // 4) Pause-overlay click: resume (no rewind)
     pauseOverlay.addEventListener('click', () => {
       video.play();
-      hidePauseOverlay();
-      startTracking();
-    });
-
-    video.addEventListener('ended', () => {
-      video.currentTime = 0;
-      showPauseOverlay();
-      stopTracking();
-    });
-
-    window.addEventListener('load', () => {
-      video.autoplay = true;
-      video.muted = true;
-      video.play();
-      showTapForSound();
-      startTracking();
+      hidePause();
+      startProgress();
     });
   </script>
 </body>
