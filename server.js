@@ -2,8 +2,10 @@
 const express = require('express');
 const ytdl    = require('@distube/ytdl-core');
 const path    = require('path');
+const cors = require('cors');
 
 const app  = express();
+app.use(cors());
 const PORT = process.env.PORT || 3000;
 
 // 1) Serve static assets (index.html + any JS/CSS/images) from ./public
