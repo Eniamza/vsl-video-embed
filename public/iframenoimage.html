@@ -86,7 +86,8 @@
             align-items: center;
             flex-direction: column;
             z-index: 15;
-            background-image: url('https://static.vecteezy.com/system/resources/previews/007/756/466/non_2x/sale-banner-buy-now-discount-big-sale-final-sale-and-best-price-for-website-banner-advertisements-blog-stickers-illustration-free-vector.jpg');
+            /* background-image: url('https://static.vecteezy.com/system/resources/previews/007/756/466/non_2x/sale-banner-buy-now-discount-big-sale-final-sale-and-best-price-for-website-banner-advertisements-blog-stickers-illustration-free-vector.jpg'); */
+            background-color: rgba(0, 0, 0, 0.8);
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -247,7 +248,7 @@
             player = new YT.Player('player', {
                 height: '360',
                 width: '640',
-                videoId: 'gzzRFU8CcG8',
+                videoId: 'kDiwPtS8VVw',
                 playerVars: {
                     'autoplay': 1,
                     'controls': 0,
@@ -258,7 +259,8 @@
                     'playsinline': 1,
                     'enablejsapi': 1,
                     'origin': window.location.origin,
-                    'mute': 1
+                    'mute': 1,
+                    'rel': 0
                 },
                 events: {
                     'onReady': onPlayerReady,
@@ -278,14 +280,10 @@
 
         function onPlayerStateChange(event) {
             if (event.data == YT.PlayerState.PLAYING) {
-                // Immediately remove YouTube overlays before showing video
+                // Immediately remove YouTube overlays and hide our overlays
                 removeYouTubePauseOverlay();
-                
-                // Add a delay before hiding our pause overlay to ensure YouTube overlays are completely gone
-                setTimeout(() => {
-                    pauseOverlay.style.display = 'none';
-                    endOverlay.style.display = 'none';
-                }, 200);
+                pauseOverlay.style.display = 'none';
+                endOverlay.style.display = 'none';
             } else if (event.data == YT.PlayerState.PAUSED) {
                 pauseOverlay.style.display = 'flex';
                 endOverlay.style.display = 'none';
@@ -386,7 +384,8 @@
                     soundPromptBottom.style.display = 'none';
                     
                     // Restart video from beginning
-                    player.seekTo(0);
+                    const duration = player.getDuration();
+                    player.seekTo(duration - 2);
                     player.playVideo();
                     return; // Don't continue to pause/play logic
                 }
@@ -403,6 +402,8 @@
                     if (state === YT.PlayerState.PLAYING) {
                         player.pauseVideo();
                     } else if (state === YT.PlayerState.PAUSED) {
+                        // Hide pause overlay immediately when user clicks to resume
+                        pauseOverlay.style.display = 'none';
                         player.playVideo();
                     } else if (state === YT.PlayerState.CUED) {
                         player.playVideo();
