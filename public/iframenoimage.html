@@ -384,8 +384,7 @@
                     soundPromptBottom.style.display = 'none';
                     
                     // Restart video from beginning
-                    const duration = player.getDuration();
-                    player.seekTo(duration - 2);
+                    player.seekTo(0);
                     player.playVideo();
                     return; // Don't continue to pause/play logic
                 }
